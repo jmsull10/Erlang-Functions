@@ -1,0 +1,48 @@
+% Slide maps processing example
+-module(empmap).
+-export([mapByTitle/0]).
+-import(employeesonly, [get_employees/0]).
+-define(SALARY, 6).
+
+mapByTitle() ->
+	Titlemaps = mapByTitle(get_employees(),#{}),
+	print_title(lists:sort(maps:keys(Titlemaps)) , Titlemaps).
+
+mapByTitle([], Returnmaps) -> Returnmaps;
+mapByTitle([ Employee | Tail], Runningmaps) -> 
+	{employee, _, _, _, Title, _} = Employee,
+	case maps:is_key(Title, Runningmaps) of 
+		true -> Value = maps:get(Title, Runningmaps);
+		false -> Value = []
+	end,
+	mapByTitle(Tail, maps:put(Title, lists:append(Value, [Employee]), Runningmaps)).
+
+print_title([], _) -> ok;
+print_title([ Title | Tail], Titlemaps) ->
+	TitledEmployees = maps:get(Title, Titlemaps),
+	% ~s = string, ~B is a number, ~n is a new line
+	io:format("~s ~B ~n ", [ Title ++ ": ", length(TitledEmployees) ]),
+	% We want to call print_emps with a sorted list desc salary
+	print_emps(lists:sort(fun (E1,E2) -> element(?SALARY, E1) >= element(?SALARY, E2) end,
+	TitledEmployees) ),
+	print_title(Tail, Titlemaps).
+
+print_emps([]) -> ok;
+print_emps([Emp | Tail]) ->
+	{employee, _, Last, First, _, Salary} = Emp,
+	io:format(" ~s, ~s - $~B ~n", [Last, First, Salary]),
+	print_emps(Tail).
+
+
+
+count_dbas([]) -> 0;
+count_dbas([{employee,_,_,_,"Database Administrator",_}| Tail]) -> 
+	1 + count_dbas(Tail).
+count_dbas([_| Tail]) -> count_dbas(Tail).
+
+
+
+
+
+
+
